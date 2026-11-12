@@ -11,6 +11,7 @@ La arquitectura y las tecnologías (Express, HTML y JavaScript sin framework, Su
 - **SKU:** único dentro de cada inventario, sin distinguir mayúsculas (`ab-1` equivale a `AB-1`). Dos cuentas distintas pueden usar el mismo SKU.
 - **Bajo mínimo:** un producto está bajo mínimo solo si `cantidad < cantidad mínima`. Si la cantidad es igual al mínimo, **no** está bajo mínimo.
 - **Contraseñas:** las gestiona Supabase Auth. Nunca se almacenan en las tablas del proyecto.
+- **Confirmación de correo:** activa en Supabase Auth. Una cuenta nueva solo puede iniciar sesión después de abrir el enlace de confirmación, que lleva a la página de inventario únicamente si Supabase establece una sesión válida. Los mensajes de registro no revelan si un correo ya tiene cuenta.
 
 ## Supuestos
 
@@ -28,8 +29,8 @@ La arquitectura y las tecnologías (Express, HTML y JavaScript sin framework, Su
 
 Criterios de aceptación:
 
-1. Con un correo nuevo y una contraseña de 8 o más caracteres, el registro crea la cuenta y deja la sesión iniciada en la página de inventario.
-2. Registrarse con un correo ya usado muestra "Ese correo ya está registrado" y no crea otra cuenta.
+1. Con un correo nuevo y una contraseña de 8 o más caracteres, el registro crea la cuenta **sin iniciar sesión** y muestra "Si el correo es válido, recibirás un enlace para confirmar tu cuenta". Hasta abrir ese enlace, iniciar sesión no da acceso al inventario y muestra "Confirma tu correo antes de iniciar sesión". Al abrir el enlace se llega a la página de inventario con la sesión iniciada; si el enlace no produce una sesión válida (por ejemplo, porque expiró o ya se usó), se muestra el inicio de sesión.
+2. Registrarse con un correo que ya tiene cuenta muestra **exactamente el mismo mensaje** que un registro nuevo, no crea una segunda cuenta y no cambia la contraseña de la existente. Se comprueba comparando la respuesta de ambos casos en el navegador y verificando en Supabase Auth que solo hay una cuenta con ese correo.
 3. Una contraseña de menos de 8 caracteres o un correo sin formato válido muestra un error en el campo y no crea la cuenta.
 4. Iniciar sesión con credenciales correctas lleva a la página de inventario; con credenciales incorrectas muestra "Correo o contraseña incorrectos", sin indicar cuál dato falló.
 5. Al cerrar sesión, entrar a la página de inventario redirige al inicio de sesión.
