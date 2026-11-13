@@ -130,10 +130,10 @@
 - **Primera creación de `docs/diseno.md`.** Se rechazó porque desactivaba la confirmación de correo (corrección 3).
 - **Dos primeras solicitudes de aprobación del plan.** Se rechazaron hasta incorporar las correcciones 1 y 2 y la separación de documentos.
 
-### Pendientes de autorización
+### Autorizados y ejecutados al cierre
 
-- `git push` de la rama `dia-02-planeacion`.
-- Apertura del pull request hacia `main`.
+- `git push -u origin dia-02-planeacion`: autorizado y ejecutado. Publicó la rama en GitHub con los commits `00f05d0`, `e53a0d5` y `be4712c`.
+- `gh pr create` de `dia-02-planeacion` hacia `main`: autorizado y ejecutado después de revisar el título, la descripción y el comando. Creó el pull request #8.
 
 ## 7. Evidencias verificables
 
@@ -145,7 +145,7 @@
 | `docs/diseno.md` | Arquitectura, tabla `productos` con 7 campos, RLS, función `ajustar_cantidad`, flujo de confirmación de correo y validaciones por capa |
 | Commit `00f05d0` | Agrega docs/requisitos.md con las historias de usuario |
 | Commit `e53a0d5` | Agrega diseño técnico y ajusta requisitos de confirmación de correo |
-| Rama `dia-02-planeacion` | Rama local; todavía no publicada en GitHub |
+| Rama `dia-02-planeacion` | Publicada en GitHub: https://github.com/JessBlack-GT/mini-inventario/tree/dia-02-planeacion |
 
 ### Issues
 
@@ -182,6 +182,8 @@ Cada issue termina con una referencia en texto al documento de origen (`docs/req
 
 ### Estado actual
 
+- **Rama:** `dia-02-planeacion` está publicada en GitHub y sincronizada con la copia local.
+- **Pull request:** el PR #8 está abierto (https://github.com/JessBlack-GT/mini-inventario/pull/8), con origen `dia-02-planeacion` y destino `main`.
+- **Issues:** los issues #3 a #7 permanecen abiertos.
 - **Aplicación:** todavía no se ha implementado. No existe código de Express, HTML, JavaScript ni Supabase; solo los documentos de planeación.
-- **`git push` y pull request:** el push de `dia-02-planeacion` y el pull request hacia `main` están pendientes de autorización.
 - **Capturas:** este día no incluye capturas de pantalla.
