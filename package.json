@@ -1,0 +1,19 @@
+{
+  "name": "mini-inventario",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aplicación web para gestionar inventario.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}

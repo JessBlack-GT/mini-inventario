@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Inventario</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="encabezado">
+    <h1>Mini Inventario</h1>
+    <p id="contador" class="contador" aria-live="polite"></p>
+  </header>
+
+  <main>
+    <section class="tarjeta" aria-labelledby="titulo-formulario">
+      <h2 id="titulo-formulario">Agregar producto</h2>
+      <form id="formulario" novalidate>
+        <input type="hidden" name="id">
+
+        <div class="campo">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" required maxlength="100" autocomplete="off">
+          <p class="error" data-error-de="nombre"></p>
+        </div>
+
+        <div class="campo">
+          <label for="sku">SKU</label>
+          <input id="sku" name="sku" required maxlength="50" autocomplete="off">
+          <p class="error" data-error-de="sku"></p>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" name="cantidad" type="number" min="0" step="1" required inputmode="numeric">
+            <p class="error" data-error-de="cantidad"></p>
+          </div>
+          <div class="campo">
+            <label for="minimo">Cantidad mínima</label>
+            <input id="minimo" name="minimo" type="number" min="0" step="1" required inputmode="numeric">
+            <p class="error" data-error-de="minimo"></p>
+          </div>
+        </div>
+
+        <p class="error" data-error-de="general" role="alert"></p>
+
+        <div class="acciones">
+          <button type="submit" id="boton-guardar">Agregar</button>
+          <button type="button" id="boton-cancelar" class="secundario" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="titulo-lista">
+      <h2 id="titulo-lista">Productos</h2>
+      <p id="vacio" class="vacio" hidden>
+        Aún no tienes productos. <a href="#nombre">Registra el primero</a>.
+      </p>
+      <div class="tabla-contenedor">
+        <table id="tabla" hidden>
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">SKU</th>
+              <th scope="col" class="num">Cantidad</th>
+              <th scope="col" class="num">Mínimo</th>
+              <th scope="col">Estado</th>
+              <th scope="col"><span class="oculto">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
