@@ -1,5 +1,5 @@
-// Interfaz de la página de inventario. No accede a los datos directamente:
-// todo pasa por productos.js.
+// Interfaz de la página. No accede a los datos directamente: los productos
+// pasan por productos.js y la sesión por auth.js.
 import {
   listarProductos,
   obtenerProducto,
@@ -8,6 +8,14 @@ import {
   estaBajoMinimo,
   ErrorProducto,
 } from './productos.js';
+import {
+  registrar,
+  iniciarSesion,
+  cerrarSesion,
+  usuarioActual,
+  alCambiarSesion,
+  ErrorAuth,
+} from './auth.js';
 
 const formulario = document.getElementById('formulario');
 const tituloFormulario = document.getElementById('titulo-formulario');
@@ -18,11 +26,153 @@ const tabla = document.getElementById('tabla');
 const vacio = document.getElementById('vacio');
 const contador = document.getElementById('contador');
 
+const cargando = document.getElementById('cargando');
+const vistaAcceso = document.getElementById('vista-acceso');
+const vistaInventario = document.getElementById('vista-inventario');
+const formularioAcceso = document.getElementById('formulario-acceso');
+const tituloAcceso = document.getElementById('titulo-acceso');
+const botonAcceso = document.getElementById('boton-acceso');
+const botonCambiarModo = document.getElementById('boton-cambiar-modo');
+const errorAcceso = document.getElementById('error-acceso');
+const avisoAcceso = document.getElementById('aviso-acceso');
+const sesion = document.getElementById('sesion');
+const correoUsuario = document.getElementById('correo-usuario');
+const botonSalir = document.getElementById('boton-salir');
+const campoContrasena = document.getElementById('contrasena');
+const botonVerContrasena = document.getElementById('boton-ver-contrasena');
+
+let modoRegistro = false;
+
 formulario.addEventListener('submit', alGuardar);
 botonCancelar.addEventListener('click', salirDeEdicion);
 cuerpoTabla.addEventListener('click', alPulsarEnTabla);
+formularioAcceso.addEventListener('submit', alEnviarAcceso);
+botonCambiarModo.addEventListener('click', () => cambiarModo(!modoRegistro));
+botonSalir.addEventListener('click', alCerrarSesion);
+// Botón nativo type="button": responde a clic, Enter y Espacio sin enviar el formulario.
+botonVerContrasena.addEventListener('click', () => {
+  verContrasena(campoContrasena.type === 'password');
+});
 
-pintarLista();
+iniciar();
+
+// ---------------------------------------------------------------------------
+// Sesión
+
+async function iniciar() {
+  // Si el enlace de confirmación trae un error (expirado o ya usado), avisarlo.
+  const parametros = new URLSearchParams(window.location.hash.slice(1) || window.location.search);
+  const falloEnlace = parametros.has('error') || parametros.has('error_description');
+
+  const usuario = await usuarioActual();
+  // Limpia los datos de sesión o error que dejó el enlace en la URL.
+  if (window.location.hash || window.location.search) {
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  if (usuario) {
+    await mostrarInventario(usuario);
+  } else {
+    mostrarAcceso(falloEnlace ? 'El enlace no es válido o expiró. Inicia sesión' : '');
+  }
+
+  alCambiarSesion(async (evento, session) => {
+    if (evento === 'SIGNED_OUT' || !session) {
+      mostrarAcceso();
+    } else if (evento === 'SIGNED_IN' && vistaInventario.hidden) {
+      await mostrarInventario(session.user);
+    }
+  });
+}
+
+async function mostrarInventario(usuario) {
+  cargando.hidden = true;
+  vistaAcceso.hidden = true;
+  formularioAcceso.reset();
+  verContrasena(false);
+  correoUsuario.textContent = usuario.email ?? '';
+  sesion.hidden = false;
+  contador.hidden = false;
+  vistaInventario.hidden = false;
+  salirDeEdicion();
+  try {
+    await pintarLista();
+  } catch (error) {
+    mostrarError(error);
+  }
+}
+
+function mostrarAcceso(mensajeError = '') {
+  cargando.hidden = true;
+  vistaInventario.hidden = true;
+  sesion.hidden = true;
+  contador.hidden = true;
+  cuerpoTabla.replaceChildren(); // no dejar datos de la cuenta anterior en la página
+  vistaAcceso.hidden = false;
+  verContrasena(false);
+  avisoAcceso.textContent = '';
+  errorAcceso.textContent = mensajeError;
+  formularioAcceso.elements.correo.focus();
+}
+
+/** Muestra u oculta la contraseña sin tocar lo escrito. */
+function verContrasena(visible) {
+  campoContrasena.type = visible ? 'text' : 'password';
+  botonVerContrasena.textContent = visible ? 'Ocultar contraseña' : 'Mostrar contraseña';
+}
+
+function cambiarModo(registro) {
+  modoRegistro = registro;
+  tituloAcceso.textContent = registro ? 'Crear una cuenta' : 'Iniciar sesión';
+  botonAcceso.textContent = registro ? 'Crear cuenta' : 'Iniciar sesión';
+  botonCambiarModo.textContent = registro ? 'Ya tengo cuenta' : 'Crear una cuenta';
+  formularioAcceso.elements.contrasena.autocomplete = registro ? 'new-password' : 'current-password';
+  formularioAcceso.elements.correo.value = '';
+  formularioAcceso.elements.contrasena.value = '';
+  verContrasena(false);
+  errorAcceso.textContent = '';
+  avisoAcceso.textContent = '';
+  formularioAcceso.elements.correo.focus();
+}
+
+async function alEnviarAcceso(evento) {
+  evento.preventDefault();
+  errorAcceso.textContent = '';
+  avisoAcceso.textContent = '';
+
+  const correo = formularioAcceso.elements.correo.value.trim();
+  const contrasena = formularioAcceso.elements.contrasena.value;
+
+  botonAcceso.disabled = true;
+  try {
+    if (modoRegistro) {
+      avisoAcceso.textContent = await registrar(correo, contrasena);
+      formularioAcceso.elements.contrasena.value = '';
+    } else {
+      // Al iniciar sesión, alCambiarSesion (SIGNED_IN) muestra el inventario.
+      await iniciarSesion(correo, contrasena);
+    }
+  } catch (error) {
+    if (!(error instanceof ErrorAuth)) console.error(error);
+    errorAcceso.textContent =
+      error instanceof ErrorAuth ? error.message : 'Ocurrió un error inesperado';
+  } finally {
+    botonAcceso.disabled = false;
+  }
+}
+
+async function alCerrarSesion() {
+  botonSalir.disabled = true;
+  try {
+    await cerrarSesion();
+  } finally {
+    botonSalir.disabled = false;
+    mostrarAcceso();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Inventario
 
 async function pintarLista() {
   const productos = await listarProductos();
