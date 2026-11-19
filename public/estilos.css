@@ -85,7 +85,7 @@ button {
 button.secundario { background: transparent; color: var(--primario); }
 button:disabled { opacity: 0.6; cursor: wait; }
 
-.tabla-contenedor { overflow-x: auto; }
+.tabla-contenedor { overflow-x: auto; position: relative; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--borde); }
 th { color: var(--texto-suave); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
