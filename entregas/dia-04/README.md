@@ -46,7 +46,7 @@ Entre esos dos prompts y después de ellos, también pedí:
 - dividir dos sentencias en líneas cortas;
 - agregar el botón Mostrar contraseña y corregir el cambio de modo (sección 5).
 
-El agente mostró el SQL o el cambio antes de aplicarlo, y no hizo commit, push ni pull request.
+El agente mostró el SQL o el cambio antes de aplicarlo, y durante esa sesión no hizo commit, push ni pull request; se hicieron después, con autorización (sección 8).
 
 ## 3. Migración `crear_tabla_productos`
 
@@ -188,15 +188,32 @@ Muestra el formulario «Iniciar sesión» con la contraseña oculta y los botone
 - **Formato de la solicitud:** pedí que la solicitud se mostrara con líneas más cortas antes de aprobarla. Fue solo un cambio de formato, distinto del ajuste técnico del `REVOKE` (sección 3).
 - **Resultado:** migración `20261117205756` aplicada y verificada con consultas de solo lectura.
 
-### Acciones pospuestas
+### Acciones posteriores
 
-- Commit, push y pull request: no autorizados todavía.
+- Commit, push y pull request: autorizados después de la sesión y ya realizados (sección 8).
 
-## 7. Estado actual
+## 7. Alcance del MCP de Supabase
 
-- **Rama:** `dia-04-supabase`, sin commits nuevos.
-  - Modificados: `package.json`, `package-lock.json`, `public/` y `src/server.js`, `test/server.test.js`.
-  - Sin seguimiento todavía: `public/auth.js`, `public/supabase.js`, `supabase/`, `.env.example` y `entregas/dia-04/`.
+Fragmento de la configuración actual de `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=knjlnklpcnkaxnhgakti"
+    }
+  }
+}
+```
+
+- **Qué limita `project_ref`:** el MCP de Supabase queda restringido a ese único proyecto; sus herramientas no pueden consultar ni modificar otros proyectos de la cuenta.
+- **Cómo se comprobó:** se pidió al MCP la URL de API del proyecto (`get_project_url`) y devolvió `https://knjlnklpcnkaxnhgakti.supabase.co`, con el mismo identificador que `project_ref`. Además, su esquema `public` contiene solo la tabla `productos`, con RLS activo.
+- **Alcance de la comprobación:** es una verificación de la configuración actual del repositorio, hecha después de la entrega; no documenta cómo estaba configurado el MCP el día de la entrega original.
+
+## 8. Estado actual
+
+- **Rama:** `dia-04-supabase`. La entrega original y esta corrección de la bitácora corresponden al PR #10.
+- **Pull request:** [#10 — Día 4: Supabase, RLS e inicio de sesión](https://github.com/JessBlack-GT/mini-inventario/pull/10), abierto y pendiente de revisión e integración en `main`.
 - **`.env`:** existe localmente y está ignorado por git.
-- **Pendiente:** commit, push y pull request, cuando se autoricen.
-- **Fuera del alcance de hoy:** `ajustar_cantidad`, eliminar, ajuste +/−, búsqueda, filtro y la prueba de la confirmación por correo.
+- **Pendientes técnicos:** `ajustar_cantidad`, eliminar (HU5), ajuste +/− (HU4), búsqueda, filtro y la prueba de la confirmación por correo.
