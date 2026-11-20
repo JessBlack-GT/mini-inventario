@@ -46,6 +46,26 @@ Copias literales de los mensajes enviados.
 
 En ninguna ejecución hubo pruebas omitidas ni inestables (flaky). En la ejecución 2 el reporte también se verificó y se subió, porque esos pasos corren con `!cancelled()` aunque fallen las pruebas.
 
+### Capturas
+
+Las capturas muestran el resumen de cada ejecución en GitHub Actions. No muestran el número de la ejecución, así que cada una se identificó por el digest del artefacto `playwright-report` visible en la imagen, comparado con el que devuelve la API de GitHub para esa ejecución.
+
+| Captura | Ejecución | Qué muestra | Digest del artefacto |
+|---|---|---|---|
+| [01-verde-inicial.png](./01-verde-inicial.png) | 1 — [44683277410](https://github.com/JessBlack-GT/mini-inventario/actions/runs/44683277410) | Success, duración total 1m 14s, abierta con «opened #12», artefacto de 199 KB | `sha256:18bc452f…` |
+| [02-rojo-intencional.png](./02-rojo-intencional.png) | 2 — [44684810428](https://github.com/JessBlack-GT/mini-inventario/actions/runs/44684810428) | Job fallido (2m 32s), anotación «Process completed with exit code 1.», artefacto de 204 KB | `sha256:5d4f11e5…` |
+| [03-verde-final.png](./03-verde-final.png) | 3 — [44685772427](https://github.com/JessBlack-GT/mini-inventario/actions/runs/44685772427) | Success, duración total 33s, «synchronize #12», artefacto de 199 KB | `sha256:c01b9350…` |
+
+![Verde inicial: ejecución 44683277410](./01-verde-inicial.png)
+
+![Rojo intencional: ejecución 44684810428](./02-rojo-intencional.png)
+
+![Verde final tras la corrección: ejecución 44685772427](./03-verde-final.png)
+
+Las tres capturas muestran también el aviso de GitHub sobre la obsolescencia de Node.js 20 en `actions/checkout@v4`, `actions/setup-node@v4` y `actions/upload-artifact@v4`. Es solo una advertencia y no hizo fallar ninguna ejecución.
+
+Después, el commit de esta bitácora (`16051a3`) disparó la ejecución [44688076373](https://github.com/JessBlack-GT/mini-inventario/actions/runs/44688076373): 7 pasaron, reporte verificado y artefacto publicado. Esa ejecución no reemplaza a ninguna de las tres anteriores y no tiene captura.
+
 ## 4. Diagnóstico de la falla intencional
 
 **Comandos:** `gh pr checks 12`, `gh run list --branch dia-06-ci` y `gh run view 44684810428 --log-failed`.
