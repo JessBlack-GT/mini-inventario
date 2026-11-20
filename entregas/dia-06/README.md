@@ -4,6 +4,7 @@
 - **Repositorio:** https://github.com/JessBlack-GT/mini-inventario
 - **Rama:** `dia-06-ci`
 - **Pull request:** [#12 — Configura CI de Playwright para el Día 6](https://github.com/JessBlack-GT/mini-inventario/pull/12)
+- **Merge:** el PR #12 ya se fusionó a `main` en el commit `53cfbaa8d228970cfd457abd49517592501d0d63`
 - **Asistente:** Claude Code, con `gh`
 
 ## 1. Objetivo y alcance
@@ -111,6 +112,8 @@ Comprobaciones antes del commit:
 - `tests/inventario.spec.js` era el único archivo preparado. `.claude/`, `.mcp.json` y `skills-lock.json` quedaron fuera.
 - `git add`, `git commit` y `git push origin dia-06-ci` se encadenaron con comprobaciones de `$LASTEXITCODE` y `&&`, para que no hubiera push si fallaba un paso anterior.
 
+**Nota sobre la aprobación del comando:** Rechacé el comando que encadenaba `git add`, `git commit` y `git push` con punto y coma, porque podía intentar el push aunque fallara el commit. Aprobé la versión que verificaba que solo estuviera preparado `tests/inventario.spec.js` y se detenía si el commit fallaba.
+
 Resultado: la ejecución 3 terminó en verde con 7 pruebas aprobadas y `gh pr checks 12` mostró `pass`.
 
 ## 6. Cómo se verificó el reporte antes de publicarlo
@@ -143,5 +146,4 @@ En las tres ejecuciones el log mostró `Reporte verificado: … contenidos revis
 
 ## 8. Pendientes
 
-- Hacer merge del PR #12 después de la revisión.
 - GitHub no pasa secretos a los PR que vienen de forks. En ese caso el job falla en la comprobación de secretos y no se sube ningún artefacto.
