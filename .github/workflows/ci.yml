@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Pruebas E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chromium y sus dependencias
+        run: npx playwright install --with-deps chromium
+
+      - name: Ejecutar pruebas de Playwright
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          PLAYWRIGHT_HTML_OPEN: never
+        # Antes de Playwright, comprueba que existan los secretos; solo muestra
+        # los nombres que faltan, nunca los valores. El reporter list queda en
+        # el log; el html genera playwright-report/.
+        run: |
+          faltantes=()
+          for nombre in SUPABASE_URL SUPABASE_KEY TEST_EMAIL TEST_PASSWORD; do
+            if [ -z "${!nombre}" ]; then
+              faltantes+=("$nombre")
+            fi
+          done
+          if [ "${#faltantes[@]}" -gt 0 ]; then
+            echo "::error::Faltan secretos: ${faltantes[*]}"
+            exit 1
+          fi
+          npx playwright test --reporter=list,html
+
+      # El repositorio es público: el artefacto solo se sube si el reporte no
+      # contiene ninguno de los secretos (incluido el JSON comprimido de index.html).
+      # Corre aunque fallen pruebas, para conservar el reporte en ese caso.
+      - name: Verificar que el reporte no contenga secretos
+        id: verificar
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        run: node scripts/verificar-reporte.js playwright-report
+
+      - name: Subir reporte de Playwright
+        if: ${{ !cancelled() && steps.verificar.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
