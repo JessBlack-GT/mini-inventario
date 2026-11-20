@@ -29,3 +29,7 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# Playwright (resultados de pruebas y sesiones de playwright-cli)
+/test-results/
+/.playwright-cli/

@@ -5,6 +5,7 @@ import {
   obtenerProducto,
   crearProducto,
   actualizarProducto,
+  eliminarProducto,
   estaBajoMinimo,
   ErrorProducto,
 } from './productos.js';
@@ -25,6 +26,9 @@ const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const tabla = document.getElementById('tabla');
 const vacio = document.getElementById('vacio');
 const contador = document.getElementById('contador');
+const tituloLista = document.getElementById('titulo-lista');
+const avisoLista = document.getElementById('aviso-lista');
+const errorLista = document.getElementById('error-lista');
 
 const cargando = document.getElementById('cargando');
 const vistaAcceso = document.getElementById('vista-acceso');
@@ -42,6 +46,7 @@ const campoContrasena = document.getElementById('contrasena');
 const botonVerContrasena = document.getElementById('boton-ver-contrasena');
 
 let modoRegistro = false;
+let eliminacionEnCurso = false;
 
 formulario.addEventListener('submit', alGuardar);
 botonCancelar.addEventListener('click', salirDeEdicion);
@@ -107,6 +112,8 @@ function mostrarAcceso(mensajeError = '') {
   vistaInventario.hidden = true;
   sesion.hidden = true;
   contador.hidden = true;
+  avisoLista.textContent = '';
+  errorLista.textContent = '';
   cuerpoTabla.replaceChildren(); // no dejar datos de la cuenta anterior en la página
   vistaAcceso.hidden = false;
   verContrasena(false);
@@ -206,13 +213,24 @@ function filaDeProducto(producto) {
   fila.append(estado);
 
   const acciones = document.createElement('td');
+  const botones = document.createElement('div');
+  botones.className = 'acciones-producto';
   const editar = document.createElement('button');
   editar.type = 'button';
   editar.className = 'secundario';
   editar.dataset.editar = producto.id;
   editar.textContent = 'Editar';
   editar.setAttribute('aria-label', `Editar ${producto.nombre}`);
-  acciones.append(editar);
+  const eliminar = document.createElement('button');
+  eliminar.type = 'button';
+  eliminar.className = 'secundario peligro';
+  eliminar.dataset.eliminar = producto.id;
+  eliminar.dataset.nombre = producto.nombre;
+  eliminar.dataset.sku = producto.sku;
+  eliminar.textContent = 'Eliminar';
+  eliminar.setAttribute('aria-label', `Eliminar ${producto.nombre} (${producto.sku})`);
+  botones.append(editar, eliminar);
+  acciones.append(botones);
   fila.append(acciones);
 
   return fila;
@@ -250,8 +268,12 @@ async function alGuardar(evento) {
 }
 
 async function alPulsarEnTabla(evento) {
-  const boton = evento.target.closest('button[data-editar]');
+  const boton = evento.target.closest('button[data-editar], button[data-eliminar]');
   if (!boton) return;
+  if (boton.hasAttribute('data-eliminar')) {
+    await alEliminar(boton);
+    return;
+  }
 
   try {
     const producto = await obtenerProducto(boton.dataset.editar);
@@ -259,6 +281,40 @@ async function alPulsarEnTabla(evento) {
   } catch (error) {
     mostrarError(error);
     await pintarLista();
+  }
+}
+
+async function alEliminar(boton) {
+  if (eliminacionEnCurso) return;
+  const { eliminar: id, nombre, sku } = boton.dataset;
+  if (!window.confirm(`¿Eliminar «${nombre}» (SKU ${sku})? Esta acción no se puede deshacer.`)) return;
+
+  eliminacionEnCurso = true;
+  boton.disabled = true;
+  avisoLista.textContent = '';
+  errorLista.textContent = '';
+  let eliminado = false;
+  try {
+    await eliminarProducto(id);
+    eliminado = true;
+    if (vistaInventario.hidden) return;
+    if (formulario.elements.id.value === id) salirDeEdicion();
+    boton.closest('tr')?.remove();
+    await pintarLista();
+    if (vistaInventario.hidden) return;
+    avisoLista.textContent = `Producto «${nombre}» (SKU ${sku}) eliminado.`;
+    tituloLista.focus();
+  } catch (error) {
+    if (vistaInventario.hidden) return;
+    if (!(error instanceof ErrorProducto)) console.error(error);
+    errorLista.textContent = eliminado
+      ? 'El producto se eliminó, pero no se pudo actualizar la lista. Recarga la página.'
+      : error instanceof ErrorProducto ? error.message : 'No se pudo eliminar el producto';
+    if (eliminado) tituloLista.focus();
+  } finally {
+    eliminacionEnCurso = false;
+    boton.disabled = false;
+    if (!eliminado && boton.isConnected) boton.focus();
   }
 }
 

@@ -77,6 +77,20 @@ export async function actualizarProducto(id, datos) {
   return data;
 }
 
+/** Elimina un solo producto visible para la sesión actual. */
+export async function eliminarProducto(id) {
+  if (!id) throw new ErrorProducto('Producto no encontrado');
+  const { data, error } = await supabase
+    .from('productos')
+    .delete()
+    .eq('id', id)
+    .select('id')
+    .maybeSingle();
+  if (error) traducirError(error);
+  // Una fila oculta por RLS o inexistente no cuenta como eliminada.
+  if (!data) throw new ErrorProducto('Producto no encontrado');
+}
+
 // ---------------------------------------------------------------------------
 // Validación (mismas reglas que docs/requisitos.md y docs/diseno.md §6).
 // La base de datos vuelve a comprobarlas con `check` y el índice único.

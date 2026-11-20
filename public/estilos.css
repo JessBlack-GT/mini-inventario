@@ -83,15 +83,19 @@ button {
   cursor: pointer;
 }
 button.secundario { background: transparent; color: var(--primario); }
+button.peligro { border-color: var(--alerta); color: var(--alerta); }
 button:disabled { opacity: 0.6; cursor: wait; }
 
-.tabla-contenedor { overflow-x: auto; }
+.tabla-contenedor { overflow-x: auto; position: relative; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--borde); }
 th { color: var(--texto-suave); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .sku { font-family: ui-monospace, Consolas, monospace; }
 td button { padding: 4px 12px; }
+.acciones-producto { display: flex; gap: 8px; flex-wrap: wrap; }
+
+#aviso-lista:empty, #error-lista:empty { display: block; margin: 0; }
 
 tr.bajo-minimo { background: var(--alerta-fondo); }
 .marca {

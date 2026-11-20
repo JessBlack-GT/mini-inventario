@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mini Inventario</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="estilos.css">
   <!-- Cliente de Supabase (build UMD fijado en package-lock.json); define window.supabase -->
   <script src="/vendor/supabase.js"></script>
@@ -92,7 +93,9 @@
       </section>
 
       <section class="tarjeta" aria-labelledby="titulo-lista">
-        <h2 id="titulo-lista">Productos</h2>
+        <h2 id="titulo-lista" tabindex="-1">Productos</h2>
+        <p id="aviso-lista" class="aviso" role="status"></p>
+        <p id="error-lista" class="error" role="alert"></p>
         <p id="vacio" class="vacio" hidden>
           Aún no tienes productos. <a href="#nombre">Registra el primero</a>.
         </p>
