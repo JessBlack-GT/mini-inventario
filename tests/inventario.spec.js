@@ -21,11 +21,25 @@ function skuUnico() {
   return sku;
 }
 
+/**
+ * Escribe un valor en un campo sin que aparezca en el reporte. locator.fill
+ * titula el paso como `Fill "<valor>"`, y el reporte HTML se publica como
+ * artefacto en CI; evaluate solo aparece como "Evaluate".
+ */
+async function rellenarSinRegistrar(locator, valor) {
+  await locator.evaluate((campo, texto) => {
+    campo.focus();
+    campo.value = texto;
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    campo.dispatchEvent(new Event('change', { bubbles: true }));
+  }, valor);
+}
+
 async function iniciarSesion(page, contrasena = TEST_PASSWORD) {
   await page.goto('/');
   await expect(page.locator('#vista-acceso')).toBeVisible();
-  await page.locator('#correo').fill(TEST_EMAIL);
-  await page.locator('#contrasena').fill(contrasena);
+  await rellenarSinRegistrar(page.locator('#correo'), TEST_EMAIL);
+  await rellenarSinRegistrar(page.locator('#contrasena'), contrasena);
   await page.locator('#boton-acceso').click();
 }
 
