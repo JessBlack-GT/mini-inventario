@@ -89,7 +89,7 @@ test('inicia sesión con la cuenta de prueba', async ({ page }) => {
 test('rechaza una contraseña incorrecta', async ({ page }) => {
   await iniciarSesion(page, 'contrasena-incorrecta-e2e');
 
-  await expect(page.locator('#error-acceso')).toHaveText('Falla intencional del Día 6');
+  await expect(page.locator('#error-acceso')).toHaveText('Correo o contraseña incorrectos');
   await expect(page.locator('#vista-acceso')).toBeVisible();
   await expect(page.locator('#vista-inventario')).toBeHidden();
 });
