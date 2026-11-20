@@ -1,11 +1,14 @@
 // Capa de acceso a datos de productos.
 //
-// Es el ÚNICO archivo que sabe dónde se guardan los productos. Por ahora usa
-// localStorage; después se reemplazará por Supabase. Para que ese cambio no
-// afecte a la interfaz, todas las funciones son asíncronas (devuelven Promesas)
-// y los errores se lanzan como ErrorProducto con el campo afectado.
+// Es el ÚNICO archivo que sabe dónde se guardan los productos: la tabla
+// public.productos de Supabase. RLS garantiza que cada cuenta solo lea y
+// modifique sus propios productos; `user_id` lo asigna la base de datos
+// (default auth.uid()), nunca el navegador. Los errores se lanzan como
+// ErrorProducto con el campo afectado.
 
-const CLAVE = 'mini-inventario:productos';
+import { supabase } from './supabase.js';
+
+const COLUMNAS = 'id, nombre, sku, cantidad, minimo, created_at';
 // Máximo de la columna `integer` de Postgres (docs/diseno.md §3).
 const MAXIMO_ENTERO = 2147483647;
 
@@ -28,46 +31,55 @@ export function estaBajoMinimo(producto) {
 
 /** Devuelve los productos, los más recientes primero. */
 export async function listarProductos() {
-  return leer().sort((a, b) => b.creadoEn.localeCompare(a.creadoEn));
+  const { data, error } = await supabase
+    .from('productos')
+    .select(COLUMNAS)
+    .order('created_at', { ascending: false });
+  if (error) traducirError(error);
+  return data;
 }
 
 export async function obtenerProducto(id) {
-  const producto = leer().find((p) => p.id === id);
-  if (!producto) throw new ErrorProducto('Producto no encontrado');
-  return producto;
+  const { data, error } = await supabase
+    .from('productos')
+    .select(COLUMNAS)
+    .eq('id', id)
+    .maybeSingle();
+  if (error) traducirError(error);
+  if (!data) throw new ErrorProducto('Producto no encontrado');
+  return data;
 }
 
 /** Crea un producto a partir de { nombre, sku, cantidad, minimo }. */
 export async function crearProducto(datos) {
   const limpio = validar(datos);
-  const productos = leer();
-  comprobarSkuUnico(productos, limpio.sku);
-
-  const producto = {
-    id: crypto.randomUUID(),
-    ...limpio,
-    creadoEn: new Date().toISOString(),
-  };
-  productos.push(producto);
-  guardar(productos);
-  return producto;
+  const { data, error } = await supabase
+    .from('productos')
+    .insert(limpio)
+    .select(COLUMNAS)
+    .single();
+  if (error) traducirError(error);
+  return data;
 }
 
 /** Reemplaza nombre, SKU, cantidad y mínimo de un producto existente. */
 export async function actualizarProducto(id, datos) {
   const limpio = validar(datos);
-  const productos = leer();
-  const indice = productos.findIndex((p) => p.id === id);
-  if (indice === -1) throw new ErrorProducto('Producto no encontrado');
-  comprobarSkuUnico(productos, limpio.sku, id);
-
-  productos[indice] = { ...productos[indice], ...limpio };
-  guardar(productos);
-  return productos[indice];
+  const { data, error } = await supabase
+    .from('productos')
+    .update(limpio)
+    .eq('id', id)
+    .select(COLUMNAS)
+    .maybeSingle();
+  if (error) traducirError(error);
+  // Sin fila: no existe o es de otra cuenta (RLS la oculta).
+  if (!data) throw new ErrorProducto('Producto no encontrado');
+  return data;
 }
 
 // ---------------------------------------------------------------------------
-// Validación (mismas reglas que docs/requisitos.md y docs/diseno.md §6)
+// Validación (mismas reglas que docs/requisitos.md y docs/diseno.md §6).
+// La base de datos vuelve a comprobarlas con `check` y el índice único.
 
 function validar(datos) {
   const nombre = String(datos?.nombre ?? '').trim();
@@ -81,6 +93,7 @@ function validar(datos) {
   const cantidad = entero(datos?.cantidad, 'cantidad', 'La cantidad');
   const minimo = entero(datos?.minimo, 'minimo', 'La cantidad mínima');
 
+  // Solo los campos esperados: nunca id, user_id ni created_at del formulario.
   return { nombre, sku, cantidad, minimo };
 }
 
@@ -97,28 +110,24 @@ function entero(valor, campo, etiqueta) {
   return numero;
 }
 
-function comprobarSkuUnico(productos, sku, idExcluido = null) {
-  const clave = sku.toLowerCase();
-  const repetido = productos.some((p) => p.id !== idExcluido && p.sku.toLowerCase() === clave);
-  if (repetido) throw new ErrorProducto('El SKU ya existe', 'sku');
-}
-
 // ---------------------------------------------------------------------------
-// Almacenamiento (localStorage). Lo único que cambiará con Supabase.
+// Traducción de errores de Postgres / PostgREST a mensajes para la persona.
 
-function leer() {
-  try {
-    const datos = JSON.parse(localStorage.getItem(CLAVE) ?? '[]');
-    return Array.isArray(datos) ? datos : [];
-  } catch {
-    return [];
-  }
-}
-
-function guardar(productos) {
-  try {
-    localStorage.setItem(CLAVE, JSON.stringify(productos));
-  } catch {
-    throw new ErrorProducto('No se pudo guardar en este navegador');
+function traducirError(error) {
+  switch (error.code) {
+    case '23505': // índice único (user_id, lower(sku))
+      throw new ErrorProducto('El SKU ya existe', 'sku');
+    case '23514': // algún `check` de la tabla
+      throw new ErrorProducto('Los datos no son válidos');
+    case '22P02': // el id no es un UUID
+    case 'PGRST116':
+      throw new ErrorProducto('Producto no encontrado');
+    case '42501': // RLS o permisos: normalmente, sesión cerrada o expirada
+    case 'PGRST301':
+    case 'PGRST303':
+      throw new ErrorProducto('Tu sesión expiró. Vuelve a iniciar sesión');
+    default:
+      console.error(error);
+      throw new ErrorProducto('No se pudo conectar con el inventario. Inténtalo de nuevo');
   }
 }

@@ -111,6 +111,20 @@ tr.bajo-minimo { background: var(--alerta-fondo); }
 
 .vacio { color: var(--texto-suave); }
 
+.sesion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sesion .correo { color: var(--texto-suave); font-size: 0.9rem; }
+
+.tarjeta.acceso { max-width: 420px; margin: 32px auto; }
+.con-boton { display: flex; gap: 8px; }
+.con-boton input { flex: 1; min-width: 0; }
+.con-boton button { white-space: nowrap; }
+button:focus-visible { outline: 2px solid var(--primario); outline-offset: 2px; }
+
+.aviso { margin: 4px 0 0; color: var(--ok); font-size: 0.9rem; }
+.aviso:empty { display: none; }
+
+[hidden] { display: none !important; }
+
 .oculto {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
