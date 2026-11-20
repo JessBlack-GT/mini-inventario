@@ -235,12 +235,51 @@ Consulta final de solo lectura, después de la regresión, cerrando solo su prop
 ```
 
 - No quedó ningún SKU con prefijo `E2E-`.
-- `QA-D05-20261118161406` y `PRUEBA-B` siguen presentes.
+- En esta verificación, `QA-D05-20261118161406` y `PRUEBA-B` estaban presentes. Más tarde se borró el producto de exploración `QA-D05-20261118161406` desde la app (ver sección 8).
 - `PRUEBA-A` no aparece porque la consulta se hizo desde la cuenta B (la cuenta de prueba de `.env`). Por RLS, cada cuenta solo ve sus propios productos, y `PRUEBA-A` pertenece a la cuenta A. Que no aparezca no significa que se haya borrado: ni las pruebas ni la limpieza pueden borrar productos de otra cuenta.
 
-## 8. Pendientes
+## 8. Correcciones posteriores a la revisión del profesor
 
-- Favicon: `/favicon.ico` responde 404.
+Fecha: 2026-11-19. Después de la revisión se agregaron el botón Eliminar y el favicon. Hay dos tipos de verificación y se registran por separado:
+
+- **Pruebas automáticas:** usan datos simulados y no tocan la base de datos real.
+- **Eliminación real:** se hizo en la app, con la cuenta B, sobre un producto que sí existía.
+
+### Pruebas automáticas
+
+- **Servidor (`test/server.test.js`):** pasaron las 9 pruebas.
+- **Playwright con datos simulados (`tests/eliminar-producto.spec.js`):** pasaron las 3 pruebas nuevas. Reemplazan `config.js` y el cliente de Supabase por versiones simuladas, así que no usan `.env`, credenciales ni una conexión real:
+
+| Prueba | Qué comprueba |
+|---|---|
+| Cancelar la confirmación no elimina el producto en móvil | A 390 × 844 la página no se desborda, el diálogo muestra el SKU y, al cancelar, no se envía ninguna solicitud de borrado |
+| Confirmar elimina solo el producto elegido | Se borra solo el `id` elegido, aparece el aviso con el SKU y, al recargar, el otro producto sigue en la lista |
+| Si la API no devuelve una fila, no se muestra un borrado exitoso | Aparece «Producto no encontrado», no hay aviso de éxito y la lista no cambia |
+
+Estas pruebas no se repitieron después de la eliminación real.
+
+### Eliminación real de `QA-D05-20261118161406`
+
+Se borró solo ese producto, autorizado de forma explícita. Se hizo desde la interfaz, con el botón Eliminar, sin SQL, sin la API y sin el panel de Supabase. Se inició sesión en `http://localhost:3000` con la cuenta B, leyendo `TEST_EMAIL` y `TEST_PASSWORD` de `.env`, sin mostrarlos y sin guardar el estado de autenticación.
+
+1. **Antes:** la lista tenía 2 productos. `QA-D05-20261118161406` aparecía exactamente una vez y `PRUEBA-B` también estaba. El script exigía una sola fila con ese SKU exacto y buscaba el botón Eliminar dentro de esa fila. Si el SKU no aparecía o se repetía, no borraba nada.
+2. **Diálogo:** mostró el SKU exacto:
+   > ¿Eliminar «Producto de prueba Día 5» (SKU QA-D05-20261118161406)? Esta acción no se puede deshacer.
+
+   El script solo aceptaba si el diálogo contenía `(SKU QA-D05-20261118161406)`. Con cualquier otro texto, lo cancelaba.
+3. **Aviso de la app:** «Producto «Producto de prueba Día 5» (SKU QA-D05-20261118161406) eliminado.», sin mensaje de error.
+4. **Después de recargar:** solo quedó `PRUEBA-B` (Tuerca B, cantidad 12, mínimo 10). `QA-D05-20261118161406` ya no aparece.
+
+**Evidencia:** [inventario-despues-eliminar.png](./inventario-despues-eliminar.png), con el correo oculto. Las cuatro capturas anteriores se conservan sin cambios.
+
+### Favicon
+
+- `public/favicon.ico` está enlazado desde `index.html`.
+- `GET /favicon.ico` en `http://localhost:3000` respondió **HTTP 200** con `Content-Type: image/x-icon` (3715 bytes). Antes respondía 404 (sección 3).
+
+## 9. Pendientes
+
 - Móvil: no hay una pista visual de que la tabla se puede desplazar, y los nombres largos se parten en varias líneas.
 - Agregar un script de `package.json` para las pruebas E2E (por ahora, `npx playwright test`).
-- Commit, push y pull request de la rama `dia-05-pruebas`.
+
+**Pull request:** [#11 — Día 5: pruebas E2E y corrección del desborde móvil](https://github.com/JessBlack-GT/mini-inventario/pull/11)

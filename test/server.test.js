@@ -49,6 +49,14 @@ test('sirve el cliente de Supabase para el navegador', async () => {
   assert.match(res.headers.get('content-type'), /javascript/);
 });
 
+test('GET /favicon.ico responde 200 y sirve un icono ICO', async () => {
+  const res = await fetch(`${base}/favicon.ico`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /^image\//);
+  const icono = Buffer.from(await res.arrayBuffer());
+  assert.deepEqual(icono.subarray(0, 4), Buffer.from([0, 0, 1, 0]));
+});
+
 test('GET /config.js entrega la URL y una llave publishable', async () => {
   process.env.SUPABASE_URL = 'https://ejemplo.supabase.co';
   process.env.SUPABASE_KEY = 'sb_publishable_abc123';
