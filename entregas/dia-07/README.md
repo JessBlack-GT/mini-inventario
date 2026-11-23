@@ -685,3 +685,63 @@ Se incluyeron archivos con y sin seguimiento, y el hash de `.env`, nunca su cont
 | `git status --short` | 5 entradas sin seguimiento | Idéntico | Idéntico |
 | Rama, HEAD y `main` | `dia-07-skill`, `df7ed72` | Idénticos | Idénticos |
 | SHA-256 de 100 archivos | Registrados | Idénticos | Idénticos |
+
+## Pull request y CI
+
+### Pull request
+
+- **PR:** #14, de `dia-07-skill` hacia `main`.
+- **Commit:** `50a18e8`, con 4 archivos y 1143 líneas añadidas.
+- **Archivos:** la prueba, la skill `pruebas-inventario`, el subagente `revisor-pr` y esta bitácora.
+- **Fuera del PR:** `.mcp.json`, `skills-lock.json` y las skills de terceros.
+
+### Resultado del CI
+
+- **Job:** «Pruebas E2E (Playwright)», run `44844874494`.
+- **Conclusión:** success, de 00:35:49 a 00:36:40 UTC del 2026-11-21.
+- **Pruebas:** 10 aprobadas, 0 fallidas, 25.8 s.
+- **Verificador de secretos:** el reporte se revisó antes de subirlo y no contenía secretos.
+
+| Paso del job | Resultado |
+|---|---|
+| Instalar dependencias y Chromium | Correcto |
+| Ejecutar pruebas de Playwright | Correcto |
+| Verificar que el reporte no contenga secretos | Correcto |
+| Subir reporte de Playwright | Correcto |
+
+| Archivo de pruebas | Aprobadas |
+|---|---|
+| `tests/editar-producto.spec.js` | 3 de 3 |
+| `tests/eliminar-producto.spec.js` | 3 de 3 |
+| `tests/inventario.spec.js` | 4 de 4 |
+
+Las pruebas nuevas pasaron también con un servidor recién iniciado en CI, sin reutilizar uno local.
+La comprobación de `/config.js` pasó en ese entorno.
+
+### Limpieza después del CI
+
+Se repitió la verificación de solo lectura antes revisada, con dos ajustes previos en el script:
+
+- Un error inesperado solo muestra su tipo, nunca el mensaje ni la traza.
+- El resultado aclara que el conteo está limitado por RLS.
+
+Salida del script:
+
+```
+Consulta completada: true
+Productos con SKU E2E-% visibles para la cuenta de prueba (limitado por RLS; conteo exacto): 0
+Limpieza: VERIFICADA (no quedan productos E2E)
+```
+
+**Resultado:** conteo exacto `0`, así que la **limpieza queda verificada** tras la ejecución local y la del CI.
+
+Límites de esta comprobación:
+
+- Solo cubre los productos que RLS deja ver a la cuenta de prueba, la única que usan las pruebas.
+- Confirma el estado en el momento de la consulta, no qué borró cada `afterEach`.
+- Incluye los productos de `tests/inventario.spec.js`, que usa el mismo prefijo `E2E-`.
+
+### Pendiente
+
+- Merge del PR #14, con aprobación previa.
+- Los pendientes anteriores siguen vigentes: F, repetir la ejecución y valorar la cobertura perdida.
