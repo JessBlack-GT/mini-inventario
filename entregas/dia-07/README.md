@@ -745,3 +745,114 @@ Límites de esta comprobación:
 
 - Merge del PR #14, con aprobación previa.
 - Los pendientes anteriores siguen vigentes: F, repetir la ejecución y valorar la cobertura perdida.
+
+## Evidencia complementaria para la rúbrica
+
+Completa la evidencia de los criterios del Día 7 que no estaba explícita en las secciones anteriores.
+La comparación sin skill / con skill y el error de la IA ya están documentados más arriba.
+
+### Skill `pruebas-inventario`
+
+- **Ruta:** `.claude/skills/pruebas-inventario/SKILL.md`, la carpeta de skills del proyecto para Claude Code.
+- **Nombre:** `name: pruebas-inventario`, en el encabezado YAML.
+- **Descripción** (encabezado YAML, abreviada con […]): «Escribe o modifica pruebas de extremo a extremo de Mini Inventario con Playwright.
+  Úsala siempre que se pidan pruebas, tests o casos de prueba de Mini Inventario […], aunque no se mencione Playwright.»
+- **Reglas concretas**, una sección por cada elemento que pide el prompt de referencia:
+
+| Pide el prompt | Sección de la skill | Regla concreta |
+|---|---|---|
+| Playwright en `tests/` | 1 | `@playwright/test`, un archivo `tests/<funcionalidad>.spec.js` y `page.goto('/')` con el `baseURL` existente |
+| Credenciales del entorno | 2 | Leer las cuatro variables de `process.env`, omitir las pruebas si faltan y no escribirlas con `fill` |
+| SKU único por prueba | 3 | `skuUnico()` genera `E2E-<ms>-<sufijo>` y lo registra en `skusCreados` |
+| Borrar lo creado | 4 | `afterEach` borra solo `skusCreados`, con la cuenta de prueba y respetando RLS |
+| Rol o etiqueta | 5 | `getByRole` y `getByLabel`, `exact: true` cuando hace falta, fila localizada por SKU |
+| Caso correcto y de error | 6 | Comprobar el resultado visible y el mensaje real de la app, y que no hubo cambio |
+| Activarse con pruebas de Mini Inventario | Encabezado | La descripción dice «Úsala siempre que se pidan pruebas […] de Mini Inventario» |
+
+### Subagente `revisor-pr`: formato y solo lectura
+
+Archivo `.claude/agents/revisor-pr.md`, en la carpeta de subagentes del proyecto. Es Markdown con encabezado YAML:
+
+```yaml
+---
+name: revisor-pr
+description: Revisa los cambios de la rama actual frente a main (git diff main) en Mini Inventario y reporta secretos expuestos, cambios sin pruebas y consultas a datos sin protección por usuario. Úsalo antes de abrir o aprobar un pull request. Solo lectura; no modifica archivos.
+tools: Read, Grep, Glob, Bash
+---
+```
+
+Instrucciones de solo lectura:
+
+- No tiene las herramientas Edit ni Write.
+- Sus instrucciones limitan el uso de Bash a comandos de lectura de Git; esta restricción no constituye un bloqueo técnico.
+  Los comandos permitidos son `git diff main...HEAD`, `git status --short`, `git log`, `git show` y `git ls-files`.
+- Tiene prohibido `git add`, `commit`, `push`, `checkout`, `reset`, `restore`, `stash`, `merge`, `rebase` y `clean`,
+  borrar ramas, ejecutar pruebas, conectarse a Supabase y redirigir salida a archivos.
+- Si encuentra un secreto, debe enmascarar el valor.
+
+### `git status` antes y después del subagente
+
+Salida literal de `git status --short`, idéntica antes de invocar el subagente y después de que terminara:
+
+```
+?? .claude/
+?? .mcp.json
+?? entregas/dia-07/
+?? skills-lock.json
+?? tests/editar-producto.spec.js
+```
+
+El hallazgo mostrado y la comparación de rama, HEAD y SHA-256 de 100 archivos están en «Revisión del pull request con `revisor-pr`».
+
+### Prompts clave de la skill y del subagente
+
+- **Skill: prompt de referencia del profesor.** El mensaje exacto con el que se creó el archivo no quedó registrado,
+  así que no se afirma que se usara literalmente:
+
+  > Crea una skill llamada pruebas-inventario en la ruta correcta para este agente. Debe indicar: usar Playwright en tests/, leer credenciales del entorno, usar un SKU único por prueba, borrar lo creado, seleccionar elementos por rol o etiqueta, y cubrir el caso correcto y un caso de error. La descripción debe activarse cuando se pidan pruebas de Mini Inventario.
+
+- **Subagente:** el mensaje enviado en la sesión coincide palabra por palabra con el prompt de referencia del profesor:
+
+  > Crea un subagente llamado revisor-pr en el formato correcto para este agente. Su trabajo es revisar git diff main en busca de secretos, cambios sin pruebas y consultas sin protección por usuario. Debe responder con una lista de hallazgos, archivo y gravedad. No debe modificar archivos ni ejecutar comandos que cambien el proyecto.
+
+El error de la IA está en «Errores encontrados durante las correcciones»: la expresión regular del guard de SKU, detectada antes de ejecutar.
+
+### Comandos aprobados y cómo se comprobaron
+
+Cada comando se mostró antes de ejecutarlo y solo se ejecutó tras una aprobación explícita.
+
+| Comando | Qué hizo |
+|---|---|
+| `git pull --ff-only` | Sincronizó `main` local tras el merge del PR #14 sin crear un merge commit |
+| `git branch -d dia-07-skill` | Borró la rama local |
+| `git push origin --delete dia-07-skill` | Borró la rama remota |
+
+Detalle de cada comando:
+
+- **`git pull --ff-only`**
+  - *Por qué se aprobó:* se detendría si `main` tuviera commits propios.
+  - *Cómo se comprobó:* salida `Updating df7ed72..da60185` y `Fast-forward`; `git status -sb` mostró `## main...origin/main`.
+- **`git branch -d dia-07-skill`**
+  - *Por qué se aprobó:* antes se vio que estaba en `git branch --merged main`, y `-d` no borra commits sin integrar.
+  - *Cómo se comprobó:* salida `Deleted branch dia-07-skill (was 1929b04).`; `git branch --list dia-07-skill` no devolvió nada.
+- **`git push origin --delete dia-07-skill`**
+  - *Por qué se aprobó:* `git log origin/main..origin/dia-07-skill` no devolvía commits y no había PR abiertos.
+  - *Cómo se comprobó:* salida `- [deleted] dia-07-skill`; `git ls-remote --heads origin dia-07-skill` no devolvió nada.
+
+## Estado final (23 de noviembre de 2026)
+
+Los registros anteriores se conservan como históricos: la cabecera indica la rama de trabajo `dia-07-skill`,
+y la sección «Pendiente» anterior todavía lista el merge, que ya se hizo.
+
+| Elemento | Estado final |
+|---|---|
+| PR #14 | Fusionado correctamente en `main` el 23 de noviembre de 2026 |
+| Merge commit | `da60185` |
+| Archivos de la entrega | Los cuatro integrados: la prueba, la skill, el subagente y esta bitácora |
+| Última ejecución de CI del PR #14 | `45208733503`: 10 pruebas aprobadas y 0 fallidas |
+| Reporte de Playwright | Verificado sin secretos antes de subirlo |
+| Limpieza tras el último CI | 0 productos `E2E-…` visibles para la cuenta de prueba (limitado por RLS) |
+| Rama `dia-07-skill` | Eliminada localmente y en GitHub |
+
+Configurar el servidor MCP de Supabase con `read_only=true` es una mejora de seguridad opcional, independiente de los requisitos del Día 7.
+El archivo `.mcp.json` permanece local, sin seguimiento y fuera del repositorio.
