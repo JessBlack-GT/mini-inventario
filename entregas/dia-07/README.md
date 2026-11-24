@@ -806,8 +806,8 @@ El hallazgo mostrado y la comparación de rama, HEAD y SHA-256 de 100 archivos e
 
 ### Prompts clave de la skill y del subagente
 
-- **Skill: prompt de referencia del profesor.** El mensaje exacto con el que se creó el archivo no quedó registrado,
-  así que no se afirma que se usara literalmente:
+- **Skill:** el prompt original se recuperó del historial local de Claude Code, en una conversación anterior del proyecto
+  Mini Inventario, y coincide exactamente con el prompt de referencia del profesor:
 
   > Crea una skill llamada pruebas-inventario en la ruta correcta para este agente. Debe indicar: usar Playwright en tests/, leer credenciales del entorno, usar un SKU único por prueba, borrar lo creado, seleccionar elementos por rol o etiqueta, y cubrir el caso correcto y un caso de error. La descripción debe activarse cuando se pidan pruebas de Mini Inventario.
 
