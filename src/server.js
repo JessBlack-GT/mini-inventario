@@ -77,7 +77,38 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
 
   const puerto = Number(process.env.PORT) || 3000;
-  app.listen(puerto, () => {
-    console.log(`Mini Inventario escuchando en http://localhost:${puerto}`);
+  // 0.0.0.0 acepta conexiones de fuera del contenedor (el mapeo de puertos de Docker).
+  const host = '0.0.0.0';
+  const servidor = app.listen(puerto, host, () => {
+    console.log(`Mini Inventario escuchando en http://${host}:${puerto}`);
   });
+
+  // Cierre ordenado. docker stop envía SIGTERM y Ctrl+C envía SIGINT.
+  // Como proceso 1 del contenedor, node ignora SIGTERM si no hay un manejador.
+  const ESPERA_MAXIMA_MS = 8000; // menos que los 10 s tras los que docker stop envía SIGKILL
+  let cerrando = false;
+
+  function cerrar(senal) {
+    if (cerrando) return;
+    cerrando = true;
+    console.log(`${senal} recibido; cerrando Mini Inventario...`);
+
+    const temporizador = setTimeout(() => {
+      console.error(`El servidor no terminó de cerrar en ${ESPERA_MAXIMA_MS} ms; se fuerza la salida.`);
+      process.exit(1);
+    }, ESPERA_MAXIMA_MS);
+
+    servidor.close((error) => {
+      clearTimeout(temporizador);
+      if (error) {
+        console.error('Error al cerrar el servidor:', error.message);
+        process.exit(1);
+      }
+      // Sin process.exit(): Node termina solo, con código 0, al no quedar tareas pendientes.
+      console.log('Servidor cerrado correctamente.');
+    });
+  }
+
+  process.on('SIGTERM', () => cerrar('SIGTERM'));
+  process.on('SIGINT', () => cerrar('SIGINT'));
 }

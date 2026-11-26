@@ -1,0 +1,42 @@
+# Secretos y configuracion local
+.env
+.env.*
+**/.env
+.mcp.json
+.claude/
+
+# Dependencias (se instalan dentro de la imagen con npm ci)
+node_modules/
+**/node_modules/
+
+# Pruebas y sus resultados
+tests/
+test/
+test-results/
+playwright-report/
+.playwright-cli/
+playwright.config.js
+
+# Entregas y documentacion de la practica
+entregas/
+docs/
+
+# Componentes y herramientas que la app web no usa
+mcp-inventario/
+scripts/
+supabase/
+.github/
+skills-lock.json
+
+# Git, editores y sistema
+.git/
+.gitignore
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# Los propios archivos de Docker
+Dockerfile
+.dockerignore
