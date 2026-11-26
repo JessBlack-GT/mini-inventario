@@ -13,6 +13,7 @@ COPY package.json package-lock.json ./
 
 # Solo dependencias de produccion; Playwright queda fuera.
 RUN npm ci --omit=dev && npm cache clean --force
+RUN npm run no-existe
 
 # Copia explicita del codigo necesario en ejecucion (nunca COPY . .).
 COPY src ./src
