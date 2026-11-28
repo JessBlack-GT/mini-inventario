@@ -908,6 +908,11 @@ Una petición `GET` a https://mini-inventario-8dms.onrender.com/health el 2026-1
 200 {"status":"ok"}
 ```
 
+La aplicación pública con la sesión iniciada (barra de direcciones `mini-inventario-8dms.onrender.com`,
+botón «Cerrar sesión», formulario «Agregar producto» y lista de productos; el correo de la cuenta está tapado):
+
+![Aplicación pública con la sesión iniciada](evidencias/05-aplicacion-sesion-iniciada.png)
+
 ### Nota sobre las pruebas adicionales y `ci.yml`
 
 Las mejoras descritas en «Pruebas nuevas», «Cambio en el CI» y «Estado actual» **no están publicadas**:
@@ -949,9 +954,9 @@ Capturas incorporadas:
 | `evidencias/03a-diagnostico-mcp-prompt.png` | Prompt del diagnóstico y respuesta con el último despliegue y el log |
 | `evidencias/03b-diagnostico-mcp-causa.png` | Log del build y explicación de la causa exacta |
 | `evidencias/04-recuperacion-render.png` | `dep-dc51cfh7lnhs73a8sfsg` (`d5350e8`): `Deploy succeeded`, servicio live en la URL pública |
+| `evidencias/05-aplicacion-sesion-iniciada.png` | App en `mini-inventario-8dms.onrender.com` con la sesión iniciada; correo tapado |
 
-Evidencia faltante: no hay una captura de la aplicación pública con el inicio de sesión.
-La disponibilidad pública queda acreditada por la petición a `/health` y por el log de la captura 04.
+La disponibilidad pública queda acreditada por la captura 05, la petición a `/health` y el log de la captura 04.
 
 ### Lecciones del despliegue
 
