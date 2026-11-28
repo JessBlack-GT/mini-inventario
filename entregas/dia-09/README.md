@@ -970,5 +970,8 @@ La disponibilidad pública queda acreditada por la captura 05, la petición a `/
 
 - Render: `d5350e8` desplegado con éxito, primero por Auto-Deploy (`dep-dc519ku0tbcc73dosuk0`) y después
   por un redespliegue manual desde el Dashboard (`dep-dc51cfh7lnhs73a8sfsg`); `/health` responde 200.
-- `main` en GitHub: `d5350e8`, con el `Dockerfile` sin la línea del fallo.
+- `d5350e8` (merge del PR #20): commit de recuperación, con el `Dockerfile` sin la línea del fallo;
+  es el commit que Render desplegó con éxito.
+- `bd9f8f2` (merge del PR #21): commit que incorporó a `main` en GitHub este README y las seis capturas.
+  Solo cambia documentación; no se comprobó si Render lo desplegó.
 - Desde Claude Code no se modificaron variables de entorno ni configuraciones de Render, ni se lanzaron despliegues manuales.
